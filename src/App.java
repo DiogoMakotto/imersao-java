@@ -1,46 +1,40 @@
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
-import java.util.Map;
 
 public class App {
     public static void main(String[] args) throws Exception {
     
         // 1 Etapa - Fazer conexão HTTP e buscar os top 250 filmes
 
-        String url = "https://alura-imdb-api.herokuapp.com/movies";
-        URI endereco = URI.create(url);
-        var client = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(endereco).GET().build();
-        HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        String body = response.body();
-        System.out.println(body);
+        //String url = "https://alura-imdb-api.herokuapp.com/movies";
+        // String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java/api/TopMovies.json";
+        // ExtratorDeConteudo extrator = new ExtratorDeConteudoDoIMDB();
 
-        // 2 Etapa -  Extrair dados que interresam (Titulo, poster, classificação)
+        //String url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&start_date=2022-06-12&end_date=2022-06-14";
+        String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java/api/NASA-APOD.json";
+        ExtratorDeConteudoDaNasa extrator = new ExtratorDeConteudoDaNasa();
+        
+        var http = new ClienteHttp();
+        String json = http.buscaDados(url);
 
-        var parser = new JsonParser();
-        List<Map<String, String>> listaDeFilmes = parser.parse(body);
+        // 2 etapa - Exibir e manipular os dados
+        
+        List<Conteudo> conteudos = extrator.extraiConteudos(json);
 
-        // 3 etapa - Exibir e manipular os dados
+        var geradora = new GeradorDeFigurinhas();
 
-        for (Map<String,String> filme : listaDeFilmes) {
-            
-            String urlImagem = filme.get("image");
-            String titulo = filme.get("title");
 
-            
-            InputStream inputStream = new URL(urlImagem).openStream();
-            String nomeArquivo = titulo + ".png";
+        for (int i = 0; i < 3; i++){ //o looping roda e importa as top 10 primeiras capas filmes e as 2 primeiras fotos da API da nasa 
+        
+            Conteudo conteudo = conteudos.get(i);
+                                 
+            InputStream inputStream = new URL(conteudo.getUrlImagem()).openStream();
+            String nomeArquivo = "saida/" + conteudo.getTitulo() + ".png";
 
-            var geradora = new GeradorDeFigurinhas();
             geradora.cria(inputStream, nomeArquivo);
 
-            System.out.println(titulo);
+            System.out.println(conteudo.getTitulo());
             System.out.println();
         }
     }
